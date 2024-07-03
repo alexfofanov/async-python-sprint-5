@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  postgres-file-storage:
+    image: postgres:16
+    expose:
+      - 5432
+    env_file:
+      - ./.env_docker
+    volumes:
+      - postgres-file-storage-data:/var/lib/postgresql/data
+
+  minio-file-storage:
+    image: quay.io/minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    env_file:
+      - ./.env_docker
+    volumes:
+      - minio-file-storage-data:/data
+    command: server /data --console-address ":9001"
+
+  redis-file-storage:
+    image: redis
+    expose:
+      - 6379
+    volumes:
+      - redis-file-storage-data:/data
+
+  file-storage-api:
+    image: file-storage-api
+    build: .
+    command: sh -c "sleep 5 && alembic upgrade head && fastapi run src/main.py --port 8000"
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env_docker
+    depends_on:
+      - postgres-file-storage
+      - minio-file-storage
+      - redis-file-storage
+
+  nginx-file-storage:
+    image: nginx:1.27.0
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    ports:
+      - 80:80
+    depends_on:
+      - file-storage-api
+
+volumes:
+  postgres-file-storage-data:
+  minio-file-storage-data:
+  redis-file-storage-data:

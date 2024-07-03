@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "auth"
+version = "0.1.0"
+description = ""
+authors = ["Alex Fofanov <alex.fofanov@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12.3"
+fastapi = "^0.111.0"
+sqlalchemy = "^2.0.30"
+pydantic-settings = "^2.2.1"
+asyncpg = "^0.29.0"
+pyjwt = "^2.8.0"
+greenlet = "^3.0.3"
+passlib = "^1.7.4"
+bcrypt = "4.0.1"
+alembic = "^1.13.1"
+python-multipart = "^0.0.9"
+miniopy-async = "^1.19"
+redis = "^5.0.6"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.1"
+pytest-asyncio = "^0.23.7"
+pytest-mock = "^3.14.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
