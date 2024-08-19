@@ -4,10 +4,16 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.auth import authenticate_user, create_access_token, hash_password
+from src.core.auth import (
+    authenticate_user,
+    create_access_token,
+    get_current_user,
+    hash_password,
+)
 from src.core.config import app_settings
 from src.db.db import get_session
-from src.schemas.user import AccessToken, User, UserCreate, UserLogin
+from src.schemas.user import AccessToken, Status, User, UserCreate, UserLogin
+from src.services.file import file_crud
 from src.services.user import user_crud
 
 user_router = APIRouter()
@@ -74,3 +80,25 @@ async def auth(
         data={"sub": user.login}, expires_delta=access_token_expires
     )
     return AccessToken(access_token=access_token, token_type="bearer")
+
+
+@user_router.get(
+    '/status',
+    response_model=Status,
+    status_code=status.HTTP_200_OK,
+    summary='Статус',
+    description='Информация о статусе использования дискового пространства',
+)
+async def status(
+    *,
+    db: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+) -> Any:
+    """
+    Информация о статусе использования дискового пространства пользователем
+    """
+
+    size = await file_crud.get_status_for_user(db=db, user_id=user.id)
+    user_status = Status(account_id=user.id, used=size)
+
+    return user_status

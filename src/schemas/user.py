@@ -33,3 +33,8 @@ class User(UserBase):
 class AccessToken(BaseModel):
     access_token: str
     token_type: str
+
+
+class Status(BaseModel):
+    account_id: int
+    used: int

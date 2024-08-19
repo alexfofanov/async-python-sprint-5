@@ -4,16 +4,17 @@ from uuid import UUID
 
 from fastapi import UploadFile
 from redis import Redis
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.file import File as FileModel
 from src.schemas.file import FileCreate, FileInDB, FileUpdate
+from src.schemas.user import Status
 
 from .base import ModelType, RepositoryDB
 
 
-class RepositoryUser(RepositoryDB[FileModel, FileCreate, FileUpdate]):
+class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
     async def get_multi_for_user(
         self,
         *,
@@ -83,8 +84,21 @@ class RepositoryUser(RepositoryDB[FileModel, FileCreate, FileUpdate]):
 
         return file
 
+    async def get_status_for_user(
+        self, db: AsyncSession, user_id: int
+    ) -> ModelType | Status | None:
+        """
+        Получение статуса использования дискового пространства пользователем
+        """
 
-file_crud = RepositoryUser(FileModel)
+        stmt = select(func.sum(self._model.size)).where(
+            self._model.user_id == user_id
+        )
+        result = await db.execute(statement=stmt)
+        return result.scalar()
+
+
+file_crud = RepositoryFile(FileModel)
 
 
 def set_file_name(path_str: str, file: UploadFile) -> str:
