@@ -35,5 +35,5 @@ class File(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint('user_id', 'path', name='_user_path_uc'),
+        UniqueConstraint('user_id', 'path', 'name', name='_user_path_name_uc'),
     )
