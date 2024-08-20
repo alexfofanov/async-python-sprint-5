@@ -95,7 +95,7 @@ async def auth(
     summary='Статус',
     description='Информация о статусе использования дискового пространства',
 )
-async def status(
+async def get_status_files(
     *,
     db: AsyncSession = Depends(get_session),
     user: User = Depends(get_current_user),
