@@ -61,10 +61,10 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         return file
 
     async def get_file_on_path(
-        self, db: AsyncSession, cache: Redis, user_id: int, path: str
+        self, db: AsyncSession, cache: Redis, user_id: int, path: str, name: str
     ) -> ModelType | FileInDB | None:
         """
-        Получение фйла по пути и id пользователя
+        Получение фйла по пути, имени и id пользователя
         """
 
         cache_key = f'file_path:{str(path)}:{user_id}'
@@ -74,7 +74,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
             return file
 
         stmt = select(self._model).where(
-            (self._model.user_id == user_id) & (self._model.path == path)
+            (self._model.user_id == user_id) & (self._model.path == path) & (self._model.name == name)
         )
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
@@ -113,18 +113,31 @@ def set_file_name(path_str: str, file: UploadFile) -> str:
         return file.filename
 
     path = Path(path_str)
-    return path.parts[-1]
+    return str(path.name)
 
 
-def set_file_path(path_str: str, file_name: str) -> str:
+def set_file_path(path_str: str) -> str:
     """
     Задание пути к файлу
     """
 
+    path = Path(path_str)
     if path_str and (path_str.endswith('/') or path_str.endswith('\\')):
-        return path_str + file_name
+        if str(path) == '/':
+            return '/'
 
-    if path_str:
+        path_str = str(Path(path_str)) + '/'
+
+        if path_str[0] != '/':
+            path_str = '/' + path_str
+
         return path_str
 
-    return file_name
+    if path_str:
+        path_str = str(path.parent)
+        if path_str[0] != '/':
+            path_str = '/' + path_str
+
+        return path_str
+
+    return '/'

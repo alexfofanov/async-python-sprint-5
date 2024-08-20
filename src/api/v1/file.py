@@ -70,14 +70,14 @@ async def upload(
     path: str | None = None,
 ) -> Any:
     """
-    Загрузка файла
+    Сохранение файла в хранилище
     """
 
     file_name = set_file_name(path, file)
-    file_path = set_file_path(path, file_name)
+    file_path = set_file_path(path)
 
     file_in_db = await file_crud.get_file_on_path(
-        db=db, cache=cache, user_id=user.id, path=file_path
+        db=db, cache=cache, user_id=user.id, path=file_path, name=file_name
     )
 
     if not file_in_db:
