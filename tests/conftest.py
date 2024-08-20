@@ -19,6 +19,7 @@ URL_PREFIX_AUTH = '/api/v1/users'
 URL_PREFIX_FILE = '/api/v1/files'
 TEST_USER = {'login': 'test_user', 'password': 'password'}
 FILE_NAME = 'test_file.txt'
+UPLOAD_FILE_NAME = 'test_upload_file.txt'
 
 
 @pytest.fixture(scope='session')
@@ -115,7 +116,7 @@ async def headers():
 @pytest.fixture()
 async def test_file():
     file_content = b'this is some test file content'
-    return {'file': (FILE_NAME, file_content, 'text/plain')}
+    return {'file': (UPLOAD_FILE_NAME, file_content, 'text/plain')}
 
 
 @pytest.fixture()

@@ -43,11 +43,12 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         Получение фйла по id файла и id пользователя
         """
 
-        cache_key = f'file_id:{str(id)}'
-        cached_result = await cache.get(cache_key)
-        if cached_result:
-            file = FileInDB(**json.loads(cached_result))
-            return file
+        # Включить кэш
+        # cache_key = f'file_id:{str(id)}'
+        # cached_result = await cache.get(cache_key)
+        # if cached_result:
+        #     file = FileInDB(**json.loads(cached_result))
+        #     return file
 
         stmt = select(self._model).where(
             (self._model.id == id) & (self._model.user_id == user_id)
@@ -56,7 +57,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         file = results.scalar_one_or_none()
         if file:
             file_data = FileInDB.from_orm(file)
-            await cache.set(cache_key, file_data.json())
+            # await cache.set(cache_key, file_data.json())
 
         return file
 
@@ -72,11 +73,12 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         Получение фйла по пути, имени и id пользователя
         """
 
-        cache_key = f'file_path:{str(path)}:{user_id}'
-        cached_result = await cache.get(cache_key)
-        if cached_result:
-            file = FileInDB(**json.loads(cached_result))
-            return file
+        # todo: Включить кэш
+        # cache_key = f'file_path:{str(path)}:{user_id}'
+        # cached_result = await cache.get(cache_key)
+        # if cached_result:
+        #     file = FileInDB(**json.loads(cached_result))
+        #     return file
 
         stmt = select(self._model).where(
             (self._model.user_id == user_id)
@@ -87,7 +89,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         file = results.scalar_one_or_none()
         if file:
             file_data = FileInDB.from_orm(file)
-            await cache.set(cache_key, file_data.json())
+            # await cache.set(cache_key, file_data.json())
 
         return file
 
@@ -134,6 +136,9 @@ def set_file_path(path_str: str) -> str:
     """
     Задание пути к файлу
     """
+
+    if path_str is None:
+        return '/'
 
     path = Path(path_str)
     if path_str and (path_str.endswith('/') or path_str.endswith('\\')):

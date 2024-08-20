@@ -1,10 +1,11 @@
 import pytest
 from fastapi import status
 
-from .conftest import FILE_NAME, TEST_USER, URL_PREFIX_AUTH, URL_PREFIX_FILE
+from .conftest import FILE_NAME, TEST_USER, URL_PREFIX_AUTH, URL_PREFIX_FILE, UPLOAD_FILE_NAME
 
-FILE_PATH = 'test_file_path/'
+FILE_PATH = '/test_file_path/'
 FILE_PATH_WITH_FILE_NAME = FILE_PATH + FILE_NAME
+ROOT_PATH = '/'
 
 
 @pytest.mark.anyio
@@ -29,7 +30,7 @@ async def test_file_upload_with_path(async_client, headers, test_file, create_te
     assert response.status_code == status.HTTP_201_CREATED
     result = response.json()
     assert result['name'] == FILE_NAME
-    assert result['path'] == FILE_PATH_WITH_FILE_NAME
+    assert result['path'] == FILE_PATH
 
 
 @pytest.mark.anyio
@@ -39,8 +40,8 @@ async def test_file_upload_without_path(async_client, headers, test_file, create
     )
     assert response.status_code == status.HTTP_201_CREATED
     result = response.json()
-    assert result['name'] == FILE_NAME
-    assert result['path'] == FILE_NAME
+    assert result['name'] == UPLOAD_FILE_NAME
+    assert result['path'] == ROOT_PATH
 
 
 @pytest.mark.anyio
@@ -56,13 +57,13 @@ async def test_file_upload_with_path_without_filename(
     )
     assert response.status_code == status.HTTP_201_CREATED
     result = response.json()
-    assert result['name'] == FILE_NAME
-    assert result['path'] == FILE_PATH + FILE_NAME
+    assert result['name'] == UPLOAD_FILE_NAME
+    assert result['path'] == FILE_PATH
 
 
 @pytest.mark.anyio
 async def test_file_download_for_path(async_client, headers, create_file):
-    params = {'path': create_file['path']}
+    params = {'path': create_file['path'] + create_file['name']}
     response = await async_client.get(
         f'{URL_PREFIX_FILE}/download',
         headers=headers,
