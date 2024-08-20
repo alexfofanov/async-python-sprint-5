@@ -158,3 +158,20 @@ def set_file_path(path_str: str) -> str:
         return path_str
 
     return '/'
+
+
+def split_path_and_name(file_path: str) -> tuple[str, str]:
+    """
+    Получение пути и имени файла из полного пути
+    """
+
+    if file_path[0] != '/':
+        file_path = '/' + file_path
+
+    path = Path(file_path)
+    path_str = str(path.parent)
+    if path_str[-1] != '/':
+        path_str = path_str + '/'
+    name_str = str(path.name)
+
+    return path_str, name_str

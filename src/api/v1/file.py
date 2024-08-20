@@ -22,7 +22,12 @@ from src.db.db import get_session
 from src.db.redis import get_redis
 from src.models import User
 from src.schemas.file import FileCreate, FileInDB
-from src.services.file import file_crud, set_file_name, set_file_path
+from src.services.file import (
+    file_crud,
+    set_file_name,
+    set_file_path,
+    split_path_and_name,
+)
 from src.services.minio import minio_handler
 
 file_router = APIRouter()
@@ -120,7 +125,7 @@ async def download(
     path: str | UUID,
 ) -> Any:
     """
-    Получение файла
+    Получение файла из хранилища
     """
 
     if is_uuid(path):
@@ -128,8 +133,9 @@ async def download(
             db=db, cache=cache, id=path, user_id=user.id
         )
     else:
+        file_path, file_name = split_path_and_name(path)
         file = await file_crud.get_file_on_path(
-            db=db, cache=cache, user_id=user.id, path=path
+            db=db, cache=cache, user_id=user.id, path=file_path, name=file_name
         )
 
     if not file:

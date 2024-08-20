@@ -14,7 +14,6 @@ from src.core.config import app_settings
 from src.db.db import get_session
 from src.schemas.user import (
     AccessToken,
-    FolderStatus,
     Status,
     User,
     UserCreate,
