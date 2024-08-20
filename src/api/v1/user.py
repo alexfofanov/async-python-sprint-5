@@ -12,7 +12,14 @@ from src.core.auth import (
 )
 from src.core.config import app_settings
 from src.db.db import get_session
-from src.schemas.user import AccessToken, Status, User, UserCreate, UserLogin
+from src.schemas.user import (
+    AccessToken,
+    FolderStatus,
+    Status,
+    User,
+    UserCreate,
+    UserLogin,
+)
 from src.services.file import file_crud
 from src.services.user import user_crud
 
@@ -98,7 +105,9 @@ async def status(
     Информация о статусе использования дискового пространства пользователем
     """
 
-    size = await file_crud.get_status_for_user(db=db, user_id=user.id)
-    user_status = Status(account_id=user.id, used=size)
+    folder_statuses = await file_crud.get_status_for_user(
+        db=db, user_id=user.id
+    )
+    user_status = Status(account_id=user.id, folders=folder_statuses)
 
     return user_status

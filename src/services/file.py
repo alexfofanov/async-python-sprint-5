@@ -61,7 +61,12 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         return file
 
     async def get_file_on_path(
-        self, db: AsyncSession, cache: Redis, user_id: int, path: str, name: str
+        self,
+        db: AsyncSession,
+        cache: Redis,
+        user_id: int,
+        path: str,
+        name: str,
     ) -> ModelType | FileInDB | None:
         """
         Получение фйла по пути, имени и id пользователя
@@ -74,7 +79,9 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
             return file
 
         stmt = select(self._model).where(
-            (self._model.user_id == user_id) & (self._model.path == path) & (self._model.name == name)
+            (self._model.user_id == user_id)
+            & (self._model.path == path)
+            & (self._model.name == name)
         )
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
@@ -91,11 +98,18 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         Получение статуса использования дискового пространства пользователем
         """
 
-        stmt = select(func.sum(self._model.size)).where(
-            self._model.user_id == user_id
+        stmt = (
+            select(
+                self._model.path,
+                func.sum(self._model.size).label('used'),
+                func.count().label('files'),
+            )
+            .where(self._model.user_id == user_id)
+            .group_by(self._model.path)
         )
-        result = await db.execute(statement=stmt)
-        return result.scalar()
+
+        results = await db.execute(statement=stmt)
+        return results.all()
 
 
 file_crud = RepositoryFile(FileModel)
@@ -137,6 +151,9 @@ def set_file_path(path_str: str) -> str:
         path_str = str(path.parent)
         if path_str[0] != '/':
             path_str = '/' + path_str
+
+        if path_str[-1] != '/':
+            path_str = path_str + '/'
 
         return path_str
 

@@ -35,6 +35,14 @@ class AccessToken(BaseModel):
     token_type: str
 
 
+class FolderStatus(BaseModel):
+    path: str
+    used: int
+    files: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class Status(BaseModel):
     account_id: int
-    used: int
+    folders: list[FolderStatus]
