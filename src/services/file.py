@@ -132,7 +132,7 @@ def set_file_name(path_str: str, file: UploadFile) -> str:
     return str(path.name)
 
 
-def set_file_path(path_str: str) -> str:
+def set_file_path(path_str: str | None) -> str:
     """
     Задание пути к файлу
     """

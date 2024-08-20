@@ -1,11 +1,16 @@
 import pytest
 from fastapi import status
 
-from .conftest import FILE_NAME, TEST_USER, URL_PREFIX_AUTH, URL_PREFIX_FILE, UPLOAD_FILE_NAME
-
-FILE_PATH = '/test_file_path/'
-FILE_PATH_WITH_FILE_NAME = FILE_PATH + FILE_NAME
-ROOT_PATH = '/'
+from .conftest import (
+    FILE_NAME,
+    FILE_PATH,
+    FILE_PATH_WITH_FILE_NAME,
+    ROOT_PATH,
+    TEST_USER,
+    UPLOAD_FILE_NAME,
+    URL_PREFIX_AUTH,
+    URL_PREFIX_FILE,
+)
 
 
 @pytest.mark.anyio
@@ -19,7 +24,9 @@ async def test_add_user(async_client):
 
 
 @pytest.mark.anyio
-async def test_file_upload_with_path(async_client, headers, test_file, create_test_backet):
+async def test_file_upload_with_path(
+    async_client, headers, test_file, create_test_backet
+):
     params = {'path': FILE_PATH_WITH_FILE_NAME}
     response = await async_client.post(
         f'{URL_PREFIX_FILE}/upload',
@@ -34,7 +41,9 @@ async def test_file_upload_with_path(async_client, headers, test_file, create_te
 
 
 @pytest.mark.anyio
-async def test_file_upload_without_path(async_client, headers, test_file, create_test_backet):
+async def test_file_upload_without_path(
+    async_client, headers, test_file, create_test_backet
+):
     response = await async_client.post(
         f'{URL_PREFIX_FILE}/upload', headers=headers, files=test_file
     )

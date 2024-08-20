@@ -1,6 +1,8 @@
+from io import BytesIO
+
 import asyncpg
 import pytest
-from fastapi import status
+from fastapi import status, UploadFile
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import (
@@ -20,6 +22,9 @@ URL_PREFIX_FILE = '/api/v1/files'
 TEST_USER = {'login': 'test_user', 'password': 'password'}
 FILE_NAME = 'test_file.txt'
 UPLOAD_FILE_NAME = 'test_upload_file.txt'
+FILE_PATH = '/test_file_path/'
+FILE_PATH_WITH_FILE_NAME = FILE_PATH + FILE_NAME
+ROOT_PATH = '/'
 
 
 @pytest.fixture(scope='session')
@@ -117,6 +122,12 @@ async def headers():
 async def test_file():
     file_content = b'this is some test file content'
     return {'file': (UPLOAD_FILE_NAME, file_content, 'text/plain')}
+
+
+@pytest.fixture()
+def upload_file():
+    file_content = b'this is some test file content'
+    return UploadFile(filename=UPLOAD_FILE_NAME, file=BytesIO(file_content))
 
 
 @pytest.fixture()
