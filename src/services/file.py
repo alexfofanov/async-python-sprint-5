@@ -149,15 +149,12 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
 file_crud = RepositoryFile(FileModel)
 
 
-def set_file_name(path_str: str, file: UploadFile) -> str:
+def set_file_name(path_str: str | None , file: UploadFile) -> str:
     """
     Задание имени файла
     """
 
-    if path_str is None:
-        return file.filename
-
-    if path_str and path_str.endswith('/') or path_str.endswith('\\'):
+    if path_str is None or path_str.endswith('/'):
         return file.filename
 
     path = Path(path_str)
