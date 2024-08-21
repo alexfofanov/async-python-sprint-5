@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -24,3 +25,11 @@ class FileInDB(FileCreate):
 
 class FileUpdate:
     pass
+
+
+class SearchOptions(BaseModel):
+    path: Optional[str] = None
+    extension: Optional[str] = None
+    order_by: Optional[str] = None
+    limit: Optional[int] = None
+    query: Optional[str] = None

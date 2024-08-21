@@ -21,7 +21,7 @@ from src.core.utils import is_uuid
 from src.db.db import get_session
 from src.db.redis import get_redis
 from src.models import User
-from src.schemas.file import FileCreate, FileInDB
+from src.schemas.file import FileCreate, FileInDB, SearchOptions
 from src.services.file import (
     file_crud,
     set_file_name,
@@ -164,3 +164,27 @@ async def download(
         media_type='application/octet-stream',
         headers={'Content-Disposition': content_disposition},
     )
+
+
+@file_router.post(
+    '/search',
+    response_model=list[FileInDB],
+    summary='Поиск файлов',
+    description='Поиск файлов по заданным параметрам',
+)
+async def search_files(
+    request: Request,
+    *,
+    db: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+    options: SearchOptions,
+) -> Any:
+    """
+    Поиск файлов по заданным параметрам
+    """
+
+    files = await file_crud.search_files(
+        db=db, user_id=user.id, options=options
+    )
+
+    return files

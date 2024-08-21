@@ -4,11 +4,11 @@ from uuid import UUID
 
 from fastapi import UploadFile
 from redis import Redis
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.file import File as FileModel
-from src.schemas.file import FileCreate, FileInDB, FileUpdate
+from src.schemas.file import FileCreate, FileInDB, FileUpdate, SearchOptions
 from src.schemas.user import Status
 
 from .base import ModelType, RepositoryDB
@@ -112,6 +112,38 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
 
         results = await db.execute(statement=stmt)
         return results.all()
+
+    async def search_files(
+        self, db: AsyncSession, user_id: int, options: SearchOptions
+    ) -> ModelType | Status | None:
+        """
+        Получение файлов пользователя по заданным параметрам
+        """
+
+        filters = []
+        if options.path:
+            filters.append(self._model.path == options.path)
+
+        if options.extension:
+            filters.append(self._model.name.endswith(options.extension))
+
+        if options.query:
+            filters.append(
+                or_(
+                    self._model.name.like(options.query),
+                    self._model.path.like(options.query),
+                )
+            )
+
+        stmt = (
+            select(self._model)
+            .where(and_(*filters))
+            .limit(options.limit)
+            .order_by(options.order_by)
+        )
+        results = await db.execute(statement=stmt)
+
+        return results.scalars().all()
 
 
 file_crud = RepositoryFile(FileModel)
