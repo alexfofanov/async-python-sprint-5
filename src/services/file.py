@@ -36,6 +36,30 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         results = await db.execute(statement=stmt)
         return results.scalars().all()
 
+    async def get_multi_for_path(
+        self,
+        *,
+        db: AsyncSession,
+        path: str,
+        user_id: int,
+        offset: int,
+        limit: int,
+    ) -> list[ModelType]:
+        """
+        Получение списка файлов из папки
+        """
+
+        stmt = (
+            select(self._model)
+            .where(
+                self._model.user_id == user_id, self._model.path == path
+            )  # noqa: E712
+            .offset(offset)
+            .limit(limit)
+        )
+        results = await db.execute(statement=stmt)
+        return results.scalars().all()
+
     async def get_for_user(
         self, db: AsyncSession, cache: Redis, id: UUID, user_id: int
     ) -> ModelType | FileInDB | None:
@@ -51,7 +75,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         #     return file
 
         stmt = select(self._model).where(
-            (self._model.id == id) & (self._model.user_id == user_id)
+            self._model.id == id, self._model.user_id == user_id,
         )
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
@@ -81,9 +105,9 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         #     return file
 
         stmt = select(self._model).where(
-            (self._model.user_id == user_id)
-            & (self._model.path == path)
-            & (self._model.name == name)
+            self._model.user_id == user_id,
+            self._model.path == path,
+            self._model.name == name,
         )
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
@@ -149,7 +173,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
 file_crud = RepositoryFile(FileModel)
 
 
-def set_file_name(path_str: str | None , file: UploadFile) -> str:
+def set_file_name(path_str: str | None, file: UploadFile) -> str:
     """
     Задание имени файла
     """
@@ -169,27 +193,16 @@ def set_file_path(path_str: str | None) -> str:
     if path_str is None:
         return '/'
 
-    path = Path(path_str)
-    if path_str and (path_str.endswith('/') or path_str.endswith('\\')):
-        if str(path) == '/':
-            return '/'
-
-        path_str = str(Path(path_str)) + '/'
-
+    if path_str.endswith('/'):
         if path_str[0] != '/':
             path_str = '/' + path_str
-
         return path_str
 
-    if path_str:
-        path_str = str(path.parent)
-        if path_str[0] != '/':
-            path_str = '/' + path_str
-
-        if path_str[-1] != '/':
-            path_str = path_str + '/'
-
-        return path_str
+    if (right_margin := path_str.rfind('/')) != -1:
+        only_path = path_str[: right_margin + 1]
+        if only_path[0] != '/':
+            only_path = '/' + only_path
+        return only_path
 
     return '/'
 

@@ -51,11 +51,37 @@ async def get_files(
     Список загруженных файлов
     """
 
-    links = await file_crud.get_multi_for_user(
+    files = await file_crud.get_multi_for_path(
         db=db, user_id=user.id, offset=offset, limit=limit
     )
 
-    return links
+    return files
+
+
+@file_router.get(
+    '/folder',
+    response_model=list[FileInDB],
+    summary='Получение файлов из папки',
+    description='Получение списка файлов в папке',
+)
+async def get_files_in_folder(
+    request: Request,
+    *,
+    db: AsyncSession = Depends(get_session),
+    user: User = Depends(get_current_user),
+    path: str,
+    offset: int = 0,
+    limit: int = 10,
+) -> Any:
+    """
+    Получение списка файлов в папке
+    """
+
+    files = await file_crud.get_multi_for_path(
+        db=db, user_id=user.id, path=path, offset=offset, limit=limit
+    )
+
+    return files
 
 
 @file_router.post(
