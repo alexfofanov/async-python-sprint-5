@@ -193,15 +193,14 @@ def set_file_path(path_str: str | None) -> str:
     if path_str is None:
         return '/'
 
+    if path_str[0] != '/':
+        path_str = '/' + path_str
+
     if path_str.endswith('/'):
-        if path_str[0] != '/':
-            path_str = '/' + path_str
         return path_str
 
     if (right_margin := path_str.rfind('/')) != -1:
         only_path = path_str[: right_margin + 1]
-        if only_path[0] != '/':
-            only_path = '/' + only_path
         return only_path
 
     return '/'
