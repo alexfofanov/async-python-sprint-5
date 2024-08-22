@@ -1,7 +1,7 @@
 import pytest
 from fastapi import status
 
-from .conftest import (
+from tests.conftest import (
     FILE_NAME,
     FILE_PATH,
     FILE_PATH_WITH_FILE_NAME,

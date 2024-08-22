@@ -48,7 +48,7 @@ async def get_files(
     limit: int = 10,
 ) -> Any:
     """
-    Список загруженных файлов
+    Получение списка загруженных пользователем файлов
     """
 
     files = await file_crud.get_multi_for_user(
