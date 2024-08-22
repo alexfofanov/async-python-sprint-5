@@ -79,3 +79,14 @@ async def test_file_download_for_path(async_client, headers, create_file):
         params=params,
     )
     assert response.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.anyio
+async def test_file_download_for_id(async_client, headers, create_file):
+    params = {'path': create_file['id']}
+    response = await async_client.get(
+        f'{URL_PREFIX_FILE}/download',
+        headers=headers,
+        params=params,
+    )
+    assert response.status_code == status.HTTP_200_OK
