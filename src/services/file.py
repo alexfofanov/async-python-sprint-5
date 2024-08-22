@@ -214,10 +214,8 @@ def split_path_and_name(file_path: str) -> tuple[str, str]:
     if file_path[0] != '/':
         file_path = '/' + file_path
 
-    path = Path(file_path)
-    path_str = str(path.parent)
-    if path_str[-1] != '/':
-        path_str = path_str + '/'
-    name_str = str(path.name)
+    right_margin = file_path.rfind('/')
+    file_name = file_path[right_margin + 1:]
+    file_path = file_path[:right_margin + 1]
 
-    return path_str, name_str
+    return file_path, file_name
