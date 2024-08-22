@@ -51,7 +51,7 @@ async def get_files(
     Список загруженных файлов
     """
 
-    files = await file_crud.get_multi_for_path(
+    files = await file_crud.get_multi_for_user(
         db=db, user_id=user.id, offset=offset, limit=limit
     )
 
