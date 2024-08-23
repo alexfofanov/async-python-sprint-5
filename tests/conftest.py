@@ -2,7 +2,7 @@ from io import BytesIO
 
 import asyncpg
 import pytest
-from fastapi import status, UploadFile
+from fastapi import UploadFile, status
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import (
@@ -11,11 +11,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from src.services.minio import minio_handler
 from src.core.config import app_settings
 from src.db.db import get_session
 from src.main import app
 from src.models import Base
+from src.services.minio import minio_handler
 
 URL_PREFIX_AUTH = '/api/v1/users'
 URL_PREFIX_FILE = '/api/v1/files'
@@ -25,6 +25,25 @@ UPLOAD_FILE_NAME = 'test_upload_file.txt'
 FILE_PATH = '/test_file_path/'
 FILE_PATH_WITH_FILE_NAME = FILE_PATH + FILE_NAME
 ROOT_PATH = '/'
+EXTENSION = 'ext'
+PATTERN = 'XXX'
+
+FILES_SEARCH_IN_PATH = [
+    {'path': ROOT_PATH, 'name': 'test_file_1.txt'},
+    {'path': ROOT_PATH, 'name': 'test_file_2.txt'},
+    {'path': ROOT_PATH, 'name': 'test_file_1.jpg'},
+]
+
+FILES_SEARCH_IN_EXTENSION = [
+    {'path': '/dir1/', 'name': f'test_file_1.{EXTENSION}'},
+    {'path': '/dir1/dir2/', 'name': f'test_file_2.{EXTENSION}'},
+]
+
+FILES_SEARCH_IN_QUERY = [
+    {'path': '/dir1/', 'name': f'test_{PATTERN}_file_1.txt'},
+    {'path': '/dir1/', 'name': f'test_{PATTERN}_file_2.txt'},
+    {'path': f'/dir1_{PATTERN}/', 'name': 'test_file_3.txt'},
+]
 
 
 @pytest.fixture(scope='session')
@@ -137,3 +156,31 @@ async def create_file(async_client, headers, test_file):
     )
     assert response.status_code == status.HTTP_201_CREATED
     return response.json()
+
+
+@pytest.fixture()
+async def create_files(async_client, headers, test_file):
+    for file in (
+        FILES_SEARCH_IN_PATH
+        + FILES_SEARCH_IN_EXTENSION
+        + FILES_SEARCH_IN_QUERY
+    ):
+        params = {'path': file['path'] + file['name']}
+        response = await async_client.post(
+            f'{URL_PREFIX_FILE}/upload',
+            headers=headers,
+            files=test_file,
+            params=params,
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        # return response.json()
+
+
+def filter_files_result(files_result):
+    path_and_name = []
+    for file in files_result:
+        path_and_name.append(
+            {k: v for k, v in file.items() if k in ('path', 'name')}
+        )
+
+    return path_and_name
