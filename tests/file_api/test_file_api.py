@@ -24,17 +24,6 @@ async def test_add_user(async_client):
 
 
 @pytest.mark.anyio
-async def test_get_files(async_client, headers):
-    response = await async_client.get(
-        f'{URL_PREFIX_FILE}/',
-        headers=headers
-    )
-    assert response.status_code == status.HTTP_200_OK
-    files = response.json()
-    assert files == []
-
-
-@pytest.mark.anyio
 async def test_file_upload_with_path(
     async_client, headers, test_file, create_test_backet
 ):

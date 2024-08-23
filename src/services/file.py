@@ -46,7 +46,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         limit: int,
     ) -> list[ModelType]:
         """
-        Получение списка файлов из папки
+        Получение списка файлов из указанной папки
         """
 
         stmt = (

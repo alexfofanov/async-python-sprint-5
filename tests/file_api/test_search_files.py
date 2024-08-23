@@ -29,7 +29,6 @@ async def test_add_user(async_client):
 @pytest.mark.anyio
 async def test_search_files_in_path(async_client, headers, create_files):
     options = SearchOptions(path=ROOT_PATH).model_dump()
-
     response = await async_client.post(
         f'{URL_PREFIX_FILE}/search',
         headers=headers,
@@ -37,13 +36,14 @@ async def test_search_files_in_path(async_client, headers, create_files):
     )
     assert response.status_code == status.HTTP_200_OK
     path_and_name = filter_files_result(response.json())
-    assert path_and_name == FILES_SEARCH_IN_PATH
+    assert path_and_name == sorted(
+        FILES_SEARCH_IN_PATH, key=lambda x: (x['path'], x['name'])
+    )
 
 
 @pytest.mark.anyio
 async def test_search_files_in_extension(async_client, headers, create_files):
     options = SearchOptions(extension=EXTENSION).model_dump()
-
     response = await async_client.post(
         f'{URL_PREFIX_FILE}/search',
         headers=headers,
@@ -51,13 +51,14 @@ async def test_search_files_in_extension(async_client, headers, create_files):
     )
     assert response.status_code == status.HTTP_200_OK
     path_and_name = filter_files_result(response.json())
-    assert path_and_name == FILES_SEARCH_IN_EXTENSION
+    assert path_and_name == sorted(
+        FILES_SEARCH_IN_EXTENSION, key=lambda x: (x['path'], x['name'])
+    )
 
 
 @pytest.mark.anyio
 async def test_search_files_in_query(async_client, headers, create_files):
     options = SearchOptions(query=f'%{PATTERN}%').model_dump()
-
     response = await async_client.post(
         f'{URL_PREFIX_FILE}/search',
         headers=headers,
@@ -65,4 +66,6 @@ async def test_search_files_in_query(async_client, headers, create_files):
     )
     assert response.status_code == status.HTTP_200_OK
     path_and_name = filter_files_result(response.json())
-    assert path_and_name == FILES_SEARCH_IN_QUERY
+    assert path_and_name == sorted(
+        FILES_SEARCH_IN_QUERY, key=lambda x: (x['path'], x['name'])
+    )

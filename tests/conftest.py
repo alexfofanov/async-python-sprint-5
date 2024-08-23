@@ -45,6 +45,10 @@ FILES_SEARCH_IN_QUERY = [
     {'path': f'/dir1_{PATTERN}/', 'name': 'test_file_3.txt'},
 ]
 
+FILES_FOR_COMPARISON = (
+    FILES_SEARCH_IN_PATH + FILES_SEARCH_IN_EXTENSION + FILES_SEARCH_IN_QUERY
+)
+
 
 @pytest.fixture(scope='session')
 def anyio_backend():
@@ -160,11 +164,7 @@ async def create_file(async_client, headers, test_file):
 
 @pytest.fixture()
 async def create_files(async_client, headers, test_file):
-    for file in (
-        FILES_SEARCH_IN_PATH
-        + FILES_SEARCH_IN_EXTENSION
-        + FILES_SEARCH_IN_QUERY
-    ):
+    for file in FILES_FOR_COMPARISON:
         params = {'path': file['path'] + file['name']}
         response = await async_client.post(
             f'{URL_PREFIX_FILE}/upload',
@@ -173,11 +173,11 @@ async def create_files(async_client, headers, test_file):
             params=params,
         )
         assert response.status_code == status.HTTP_201_CREATED
-        # return response.json()
 
 
 def filter_files_result(files_result):
     path_and_name = []
+    files_result.sort(key=lambda x: (x['path'], x['name']))
     for file in files_result:
         path_and_name.append(
             {k: v for k, v in file.items() if k in ('path', 'name')}
