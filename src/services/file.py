@@ -7,10 +7,10 @@ from redis import Redis
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.config import app_settings
 from src.models.file import File as FileModel
 from src.schemas.file import FileCreate, FileInDB, FileUpdate, SearchOptions
 from src.schemas.user import Status
-from src.core.config import app_settings
 
 from .base import ModelType, RepositoryDB
 
@@ -75,13 +75,18 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
             return file
 
         stmt = select(self._model).where(
-            self._model.id == id, self._model.user_id == user_id,
+            self._model.id == id,
+            self._model.user_id == user_id,
         )
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
         if file:
-            file_data = FileInDB.from_orm(file)
-            await cache.set(cache_key, file_data.json(), ex=app_settings.redis_cache_ttl_sec)
+            file_data = FileInDB.model_validate(file)
+            await cache.set(
+                cache_key,
+                file_data.model_dump_json(),
+                ex=app_settings.redis_cache_ttl_sec,
+            )
 
         return file
 
@@ -111,8 +116,12 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
         if file:
-            file_data = FileInDB.from_orm(file)
-            await cache.set(cache_key, file_data.json(), ex=app_settings.redis_cache_ttl_sec)
+            file_data = FileInDB.model_validate(file)
+            await cache.set(
+                cache_key,
+                file_data.model_dump_json(),
+                ex=app_settings.redis_cache_ttl_sec,
+            )
 
         return file
 
