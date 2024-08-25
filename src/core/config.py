@@ -33,6 +33,7 @@ class AppSettings(BaseSettings):
 
     redis_host: IPvAnyAddress | str
     redis_port: int
+    redis_cache_ttl_sec: int
 
     model_config = ConfigDict(env_file='.env')
 

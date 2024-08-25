@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.file import File as FileModel
 from src.schemas.file import FileCreate, FileInDB, FileUpdate, SearchOptions
 from src.schemas.user import Status
+from src.core.config import app_settings
 
 from .base import ModelType, RepositoryDB
 
@@ -67,12 +68,11 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         Получение фйла по id файла и id пользователя
         """
 
-        # Включить кэш
-        # cache_key = f'file_id:{str(id)}'
-        # cached_result = await cache.get(cache_key)
-        # if cached_result:
-        #     file = FileInDB(**json.loads(cached_result))
-        #     return file
+        cache_key = f'file_id:{str(id)}'
+        cached_result = await cache.get(cache_key)
+        if cached_result:
+            file = FileInDB(**json.loads(cached_result))
+            return file
 
         stmt = select(self._model).where(
             self._model.id == id, self._model.user_id == user_id,
@@ -81,7 +81,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         file = results.scalar_one_or_none()
         if file:
             file_data = FileInDB.from_orm(file)
-            # await cache.set(cache_key, file_data.json())
+            await cache.set(cache_key, file_data.json(), ex=app_settings.redis_cache_ttl_sec)
 
         return file
 
@@ -97,12 +97,11 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         Получение фйла по пути, имени и id пользователя
         """
 
-        # todo: Включить кэш
-        # cache_key = f'file_path:{str(path)}:{user_id}'
-        # cached_result = await cache.get(cache_key)
-        # if cached_result:
-        #     file = FileInDB(**json.loads(cached_result))
-        #     return file
+        cache_key = f'file_path:{str(path)}:{user_id}:{name}'
+        cached_result = await cache.get(cache_key)
+        if cached_result:
+            file = FileInDB(**json.loads(cached_result))
+            return file
 
         stmt = select(self._model).where(
             self._model.user_id == user_id,
@@ -113,7 +112,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         file = results.scalar_one_or_none()
         if file:
             file_data = FileInDB.from_orm(file)
-            # await cache.set(cache_key, file_data.json())
+            await cache.set(cache_key, file_data.json(), ex=app_settings.redis_cache_ttl_sec)
 
         return file
 
@@ -161,6 +160,7 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
 
         stmt = (
             select(self._model)
+            .where(self._model.user_id == user_id)
             .where(and_(*filters))
             .limit(options.limit)
             .order_by(options.order_by)
