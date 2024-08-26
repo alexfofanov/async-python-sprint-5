@@ -7,4 +7,7 @@ redis: Redis = redis.asyncio.from_url(app_settings.redis_url)
 
 
 async def get_redis() -> Redis:
-    return redis
+    try:
+        yield redis
+    finally:
+        await redis.close()
