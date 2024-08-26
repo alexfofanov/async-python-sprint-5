@@ -1,5 +1,7 @@
 import json
+from functools import wraps
 from pathlib import Path
+from typing import Any, Callable
 from uuid import UUID
 
 from fastapi import UploadFile
@@ -61,18 +63,48 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         results = await db.execute(statement=stmt)
         return results.scalars().all()
 
+    @staticmethod
+    def cache_result(cache_key_prefix: str, key_fields: list[str]) -> Callable:
+        def decorator(func: Callable) -> Callable:
+            @wraps(func)
+            async def wrapper(*args, **kwargs) -> Any:
+                key_parts = [str(kwargs[key]) for key in key_fields]
+                cache_key = cache_key_prefix + ':' + ':'.join(key_parts)
+                cache = kwargs['cache']
+                cached_result = await cache.get(cache_key)
+                if cached_result:
+                    file = FileInDB(**json.loads(cached_result))
+                    return file
+
+                file = await func(*args, **kwargs)
+                if file:
+                    file_data = FileInDB.model_validate(file)
+                    await cache.set(
+                        cache_key,
+                        file_data.model_dump_json(),
+                        ex=app_settings.redis_cache_ttl_sec,
+                    )
+
+                return file
+
+            return wrapper
+
+        return decorator
+
+    @cache_result(
+        'file_id',
+        ['user_id', 'id'],
+    )
     async def get_for_user(
-        self, db: AsyncSession, cache: Redis, id: UUID, user_id: int
+        self,
+        db: AsyncSession,
+        cache: Redis,  # noqa
+        id: UUID,
+        user_id: int,
     ) -> ModelType | FileInDB | None:
         """
         Получение фйла по id файла и id пользователя
         """
-
-        cache_key = f'file_id:{str(id)}'
-        cached_result = await cache.get(cache_key)
-        if cached_result:
-            file = FileInDB(**json.loads(cached_result))
-            return file
 
         stmt = select(self._model).where(
             self._model.id == id,
@@ -80,20 +112,14 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         )
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
-        if file:
-            file_data = FileInDB.model_validate(file)
-            await cache.set(
-                cache_key,
-                file_data.model_dump_json(),
-                ex=app_settings.redis_cache_ttl_sec,
-            )
 
         return file
 
+    @cache_result('file_path', ['user_id', 'path', 'name'])
     async def get_file_on_path(
         self,
         db: AsyncSession,
-        cache: Redis,
+        cache: Redis,  # noqa
         user_id: int,
         path: str,
         name: str,
@@ -102,12 +128,6 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         Получение фйла по пути, имени и id пользователя
         """
 
-        cache_key = f'file_path:{str(path)}:{user_id}:{name}'
-        cached_result = await cache.get(cache_key)
-        if cached_result:
-            file = FileInDB(**json.loads(cached_result))
-            return file
-
         stmt = select(self._model).where(
             self._model.user_id == user_id,
             self._model.path == path,
@@ -115,13 +135,6 @@ class RepositoryFile(RepositoryDB[FileModel, FileCreate, FileUpdate]):
         )
         results = await db.execute(statement=stmt)
         file = results.scalar_one_or_none()
-        if file:
-            file_data = FileInDB.model_validate(file)
-            await cache.set(
-                cache_key,
-                file_data.model_dump_json(),
-                ex=app_settings.redis_cache_ttl_sec,
-            )
 
         return file
 
@@ -224,7 +237,7 @@ def split_path_and_name(file_path: str) -> tuple[str, str]:
         file_path = '/' + file_path
 
     right_margin = file_path.rfind('/')
-    file_name = file_path[right_margin + 1:]
-    file_path = file_path[:right_margin + 1]
+    file_name = file_path[right_margin + 1 :]
+    file_path = file_path[: right_margin + 1]
 
     return file_path, file_name
