@@ -17,13 +17,13 @@ cd async-python-sprint-5
 
 создать файл .env_docker по обарзцу .env.sample
 
-Запуск сервиса: docker-compose up --build -d
+Запуск сервиса: make start
 
 Доступ к сервису: http://127.0.0.1
 
-Запуск тестов: docker-compose exec file-storage-api pytest -v tests
+Запуск тестов: make tests
 
-Остановка сервиса: docker-compose down
+Остановка сервиса: make stop
 ```
 
 ## Описание задания
