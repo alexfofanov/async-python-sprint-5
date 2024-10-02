@@ -19,8 +19,6 @@ cd async-python-sprint-5
 
 Запуск сервиса: make start
 
-Доступ к сервису: http://127.0.0.1
-
 Запуск тестов: make tests
 
 Остановка сервиса: make stop
